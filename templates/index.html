@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VISIO — AI Image Search</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --ink: #0a0a0f;
+            --paper: #f5f2ec;
+            --gold: #c9a84c;
+            --gold-light: #e8d49a;
+            --rust: #c25b3a;
+            --slate: #2a2d3a;
+            --mist: #e8e4dc;
+            --shadow: rgba(10,10,15,0.12);
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            background-color: var(--paper);
+            color: var(--ink);
+            font-family: 'Cormorant Garamond', Georgia, serif;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+            pointer-events: none;
+            z-index: 9999;
+            opacity: 0.6;
+        }
+
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 2rem 4rem;
+            border-bottom: 1px solid rgba(10,10,15,0.1);
+            animation: fadeDown 0.8s ease both;
+        }
+
+        .logo {
+            font-size: 1.1rem;
+            font-weight: 300;
+            letter-spacing: 0.5em;
+            text-transform: uppercase;
+            color: var(--ink);
+        }
+
+        .logo span { color: var(--gold); }
+
+        .tagline {
+            font-family: 'DM Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.15em;
+            color: var(--slate);
+            opacity: 0.6;
+        }
+
+        .hero {
+            text-align: center;
+            padding: 6rem 2rem 4rem;
+            animation: fadeUp 1s ease 0.2s both;
+        }
+
+        .hero-eyebrow {
+            font-family: 'DM Mono', monospace;
+            font-size: 0.7rem;
+            letter-spacing: 0.4em;
+            text-transform: uppercase;
+            color: var(--gold);
+            margin-bottom: 1.5rem;
+        }
+
+        .hero h1 {
+            font-size: clamp(3.5rem, 8vw, 7rem);
+            font-weight: 300;
+            line-height: 0.95;
+            letter-spacing: -0.02em;
+            color: var(--ink);
+        }
+
+        .hero h1 em {
+            font-style: italic;
+            color: var(--rust);
+        }
+
+        .hero-sub {
+            margin-top: 1.5rem;
+            font-size: 1.1rem;
+            font-weight: 300;
+            color: var(--slate);
+            opacity: 0.7;
+            letter-spacing: 0.05em;
+        }
+
+        .ornament {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            max-width: 200px;
+            margin: 3rem auto;
+        }
+
+        .ornament-line {
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(to right, transparent, var(--gold));
+        }
+
+        .ornament-line:last-child {
+            background: linear-gradient(to left, transparent, var(--gold));
+        }
+
+        .ornament-diamond {
+            width: 6px;
+            height: 6px;
+            background: var(--gold);
+            transform: rotate(45deg);
+        }
+
+        main {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 2rem 6rem;
+        }
+
+        .card {
+            background: rgba(255,255,255,0.6);
+            border: 1px solid rgba(10,10,15,0.08);
+            border-radius: 2px;
+            padding: 2.5rem 3rem;
+            position: relative;
+            backdrop-filter: blur(4px);
+            transition: box-shadow 0.4s ease, transform 0.3s ease;
+        }
+
+        .card:hover {
+            box-shadow: 0 20px 60px var(--shadow);
+            transform: translateY(-2px);
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 3px;
+            height: 100%;
+            background: linear-gradient(to bottom, var(--gold), var(--rust));
+        }
+
+        .card-label {
+            font-family: 'DM Mono', monospace;
+            font-size: 0.6rem;
+            letter-spacing: 0.35em;
+            text-transform: uppercase;
+            color: var(--gold);
+            margin-bottom: 1.5rem;
+        }
+
+        .card h2 {
+            font-size: 2rem;
+            font-weight: 300;
+            letter-spacing: -0.01em;
+            margin-bottom: 2rem;
+            color: var(--ink);
+        }
+
+        .card h2 em {
+            font-style: italic;
+            color: var(--rust);
+        }
+
+        .panel-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            animation: fadeUp 1s ease 0.4s both;
+        }
+
+        @media (max-width: 768px) {
+            .panel-grid { grid-template-columns: 1fr; }
+            header { padding: 1.5rem 2rem; }
+        }
+
+        .field { margin-bottom: 1.2rem; }
+
+        .field label {
+            display: block;
+            font-family: 'DM Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.25em;
+            text-transform: uppercase;
+            color: var(--slate);
+            opacity: 0.7;
+            margin-bottom: 0.5rem;
+        }
+
+        .field input[type="text"],
+        .field input[type="file"] {
+            width: 100%;
+            background: transparent;
+            border: none;
+            border-bottom: 1px solid rgba(10,10,15,0.2);
+            padding: 0.7rem 0;
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1rem;
+            color: var(--ink);
+            outline: none;
+            transition: border-color 0.3s ease;
+        }
+
+        .field input[type="text"]:focus,
+        .field input[type="file"]:focus {
+            border-color: var(--gold);
+        }
+
+        .field input[type="text"]::placeholder {
+            color: var(--slate);
+            opacity: 0.35;
+            font-style: italic;
+        }
+
+        .file-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            border: 1px dashed rgba(10,10,15,0.2);
+            padding: 1.5rem;
+            border-radius: 2px;
+            cursor: pointer;
+            transition: border-color 0.3s, background 0.3s;
+        }
+
+        .file-wrapper:hover {
+            border-color: var(--gold);
+            background: rgba(201,168,76,0.04);
+        }
+
+        .file-wrapper input[type="file"] {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            cursor: pointer;
+            width: 100%;
+            height: 100%;
+        }
+
+        .file-icon {
+            font-size: 1.8rem;
+            opacity: 0.4;
+        }
+
+        .file-text {
+            font-family: 'DM Mono', monospace;
+            font-size: 0.7rem;
+            color: var(--slate);
+            opacity: 0.6;
+        }
+
+        .file-text strong {
+            display: block;
+            color: var(--ink);
+            opacity: 1;
+            font-size: 0.8rem;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.7rem;
+            margin-top: 1.5rem;
+            padding: 0.85rem 2rem;
+            background: var(--ink);
+            color: var(--paper);
+            font-family: 'DM Mono', monospace;
+            font-size: 0.7rem;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            border: none;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            transition: background 0.3s, color 0.3s;
+        }
+
+        .btn::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: var(--gold);
+            transform: translateX(-101%);
+            transition: transform 0.4s cubic-bezier(0.77,0,0.18,1);
+        }
+
+        .btn:hover::after { transform: translateX(0); }
+        .btn:hover { color: var(--ink); }
+
+        .btn span { position: relative; z-index: 1; }
+
+        .btn-arrow {
+            position: relative;
+            z-index: 1;
+            transition: transform 0.3s;
+        }
+
+        .btn:hover .btn-arrow { transform: translateX(4px); }
+
+        .search-card {
+            background: var(--slate);
+            color: var(--paper);
+        }
+
+        .search-card::before {
+            background: linear-gradient(to bottom, var(--gold-light), var(--gold));
+        }
+
+        .search-card .card-label { color: var(--gold-light); opacity: 0.8; }
+        .search-card h2 { color: var(--paper); }
+        .search-card .field label { color: var(--mist); opacity: 0.6; }
+
+        .search-card .field input[type="text"] {
+            color: var(--paper);
+            border-bottom-color: rgba(245,242,236,0.2);
+        }
+
+        .search-card .field input[type="text"]:focus { border-bottom-color: var(--gold); }
+
+        .search-card .field input[type="text"]::placeholder {
+            color: var(--mist);
+            opacity: 0.3;
+        }
+
+        .search-card .btn { background: var(--gold); color: var(--ink); }
+        .search-card .btn::after { background: var(--paper); }
+
+        .results-section {
+            margin-top: 4rem;
+            animation: fadeUp 0.8s ease both;
+        }
+
+        .results-header {
+            display: flex;
+            align-items: baseline;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .results-header h2 { font-size: 1.8rem; font-weight: 300; }
+
+        .results-header .count {
+            font-family: 'DM Mono', monospace;
+            font-size: 0.7rem;
+            color: var(--gold);
+            letter-spacing: 0.2em;
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .result-item {
+            position: relative;
+            overflow: hidden;
+            background: var(--mist);
+            aspect-ratio: 4/3;
+            border: 1px solid rgba(10,10,15,0.08);
+        }
+
+        .result-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            transition: transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        .result-item:hover img { transform: scale(1.06); }
+
+        .result-item::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to top, rgba(10,10,15,0.5) 0%, transparent 50%);
+            opacity: 0;
+            transition: opacity 0.4s;
+        }
+
+        .result-item:hover::after { opacity: 1; }
+
+        footer {
+            border-top: 1px solid rgba(10,10,15,0.08);
+            padding: 2rem 4rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 4rem;
+        }
+
+        .footer-copy {
+            font-family: 'DM Mono', monospace;
+            font-size: 0.6rem;
+            letter-spacing: 0.2em;
+            opacity: 0.35;
+            text-transform: uppercase;
+        }
+
+        .footer-dots { display: flex; gap: 0.5rem; }
+
+        .footer-dot {
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background: var(--gold);
+            opacity: 0.4;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .footer-dot:nth-child(2) { animation-delay: 0.4s; }
+        .footer-dot:nth-child(3) { animation-delay: 0.8s; }
+
+        @keyframes fadeDown {
+            from { opacity: 0; transform: translateY(-16px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(24px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.4; transform: scale(1); }
+            50%       { opacity: 1;   transform: scale(1.4); }
+        }
+
+        .step-badge {
+            position: absolute;
+            top: 2rem;
+            right: 2.5rem;
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 5rem;
+            font-weight: 300;
+            color: var(--gold);
+            opacity: 0.08;
+            line-height: 1;
+            pointer-events: none;
+            user-select: none;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo">VIS<span>I</span>O</div>
+        <div class="tagline">AI · Image · Search · Engine</div>
+    </header>
+
+    <section class="hero">
+        <div class="hero-eyebrow">Intelligent Visual Discovery</div>
+        <h1>Find images<br>with <em>precision</em></h1>
+        <p class="hero-sub">Upload, tag, and retrieve — powered by AI</p>
+        <div class="ornament">
+            <div class="ornament-line"></div>
+            <div class="ornament-diamond"></div>
+            <div class="ornament-line"></div>
+        </div>
+    </section>
+
+    <main>
+        <div class="panel-grid">
+
+            <!-- Upload Card -->
+            <div class="card">
+                <div class="step-badge">01</div>
+                <div class="card-label">Step One</div>
+                <h2>Upload an <em>Image</em></h2>
+                <form method="POST" action="/upload_image" enctype="multipart/form-data">
+                    <div class="field">
+                        <label>Select File</label>
+                        <div class="file-wrapper">
+                            <div class="file-icon">◈</div>
+                            <div class="file-text">
+                                <strong>Browse or drop image</strong>
+                                JPG, PNG, WEBP, GIF accepted
+                            </div>
+                            <input type="file" name="image_file" accept="image/*">
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label>Tags</label>
+                        <input type="text" name="image_tags" placeholder="e.g. portrait, sunset, abstract…">
+                    </div>
+                    <button type="submit" class="btn">
+                        <span>Upload Image</span>
+                        <span class="btn-arrow">→</span>
+                    </button>
+                </form>
+            </div>
+
+            <!-- Search Card -->
+            <div class="card search-card">
+                <div class="step-badge">02</div>
+                <div class="card-label">Step Two</div>
+                <h2>Search the <em>Archive</em></h2>
+                <form method="POST" action="/search_query">
+                    <div class="field">
+                        <label>Search Query</label>
+                        <input type="text" name="query" placeholder="Describe what you're looking for…">
+                    </div>
+                    <button type="submit" class="btn">
+                        <span>Search Images</span>
+                        <span class="btn-arrow">→</span>
+                    </button>
+                </form>
+            </div>
+
+        </div>
+
+        <!-- Results — Jinja2 template block (unchanged) -->
+        {% if results %}
+        <section class="results-section">
+            <div class="results-header">
+                <h2>Results</h2>
+                <span class="count">{{ results|length }} FOUND</span>
+            </div>
+            <div class="results-grid">
+                {% for r in results %}
+                <div class="result-item">
+                    <img src="/{{ r }}" alt="Result {{ loop.index }}" loading="lazy">
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+        {% endif %}
+
+    </main>
+
+    <footer>
+        <div class="footer-copy">© VISIO · AI Image Search</div>
+        <div class="footer-dots">
+            <div class="footer-dot"></div>
+            <div class="footer-dot"></div>
+            <div class="footer-dot"></div>
+        </div>
+    </footer>
+
+    <script>
+        // Show selected filename in the upload zone
+        const fileInput = document.querySelector('input[type="file"]');
+        const fileText  = document.querySelector('.file-text strong');
+        if (fileInput && fileText) {
+            fileInput.addEventListener('change', () => {
+                const name = fileInput.files[0]?.name;
+                if (name) fileText.textContent = name;
+            });
+        }
+
+        // Staggered card entry animation
+        document.querySelectorAll('.card').forEach((card, i) => {
+            card.style.animationDelay = `${0.3 + i * 0.15}s`;
+            card.style.animation = 'fadeUp 0.9s ease both';
+        });
+    </script>
+
+</body>
+</html>

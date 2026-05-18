@@ -1,0 +1,12 @@
+flask
+torch
+torchvision
+pillow
+sentence-transformers==3.2.1
+transformers==4.46.1
+qdrant-client
+timm
+einops
+tf-keras
+accelerate
+sentencepiece
