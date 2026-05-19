@@ -31,7 +31,7 @@ model = SentenceTransformer(
 )
 
 # Qdrant Database
-client = QdrantClient(path='image_store')
+client = QdrantClient(":memory:")
 
 # Create Collection
 if not client.collection_exists(collection_name='images'):
